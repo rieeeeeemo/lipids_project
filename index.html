@@ -1,0 +1,724 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        /* Set height of body and the document to 100% to enable "full page tabs" */
+        * {
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: Arial;
+        }
+
+        main {
+            height: 100%;
+            margin: 0;
+        }
+
+        /* Style tab links */
+        .tablink {
+            background-color: #ddd;
+            color: black;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            font-size: 17px;
+            width: 25%;
+        }
+
+            .tablink:hover {
+                background-color: #aaa;
+            }
+
+        /* Style the tab content (and add height:100% for full page content) */
+        .tabcontent {
+            display: none;
+            padding: 60px 20px;
+            height: 100%;
+        }
+
+        .container, .backdrop, textarea {
+            width: 100%;
+            height: 100%;
+        }
+
+        .highlights, textarea {
+            padding: 10px;
+            font: 20px/28px 'Ariel', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            position: relative;
+            display: block;
+            margin: 0;
+            -webkit-text-size-adjust: none;
+        }
+
+        .backdrop {
+            border: 1px solid #685972;
+            background-color: #fff;
+            overflow: auto;
+            pointer-events: none;
+        }
+
+        mark {
+            border-radius: 3px;
+            color: transparent;
+            background-color: #fcc;
+        }
+
+        .highlights {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: transparent;
+        }
+
+        textarea {
+            display: block;
+            position: absolute;
+            margin: 0;
+            border: 1px solid #74637f;
+            border-radius: 0;
+            background-color: transparent;
+            overflow: auto;
+            resize: none;
+        }
+
+        .classbutton {
+            display: block;
+            background-color: #eee;
+            color: black;
+            padding: 10px 16px;
+            width: 100%;
+            border: 1px solid #ccc;
+            outline: none;
+            text-align: left;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 15px;
+        }
+
+        .classbutton:hover {
+            background-color: #ddd;
+        }
+    </style>
+
+    <meta charset="utf-8">
+    <title>Metabolomics Tool</title>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript" src="https://cdn.bootcss.com/echarts/4.1.0-release/echarts-en.common.min.js"></script>
+    <script type="text/javascript" src="https://rawgit.com/Stuk/jszip/master/dist/jszip.min.js"></script>
+    <script type="text/javascript" src="https://rawgit.com/mholt/PapaParse/master/papaparse.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/g/filesaver.js"></script>
+    <!--<script src="echarts.js"></script>-->
+    <!--<script src="jszip.js"></script>-->
+    <!--<script src="papaparse.js"></script>-->
+    <!--<script src="FileSaver.js"></script>-->
+</head>
+
+<body>
+    <nav>
+        <button class="tablink" onclick="openPage('homepage', this)" id="defaultOpen">Home</button>
+        <button class="tablink" onclick="openPage('datapage', this)">Data File</button>
+        <button class="tablink" onclick="openPage('listpage', this)">Significance List</button>
+        <button class="tablink" onclick="openPage('plotpage', this)">Plots</button>
+    </nav>
+
+    <main>
+        <div id="homepage" class="tabcontent">
+            <div style="padding: 11px; max-width: 1000px; margin: auto">
+                <div style="max-width: 1000px; margin: auto">
+                    <img src="https://www.aips.net.au/wp-content/uploads/2011/06/Bio21-Institute-Logo.jpg" alt="Bio21" height="350" style="padding: 50px 50px">
+                    <img src="https://cdn.evbuc.com/eventlogos/85836383/metabolomicsmodified.gif" alt="Metabolomics Australia" height="350" style="padding: 50px 50px">
+                </div>
+                <div style="text-align: justify; color: #aaa; font-size: 14px; padding-bottom: 10px">
+                    <p><a href="https://www.metabolomics.net.au/">Metabolomics Australia</a> (MA) is a National Collaborative Research Infrastructure Scheme (NCRIS) capability under Bioplatforms Australia Pty Ltd (BPA). BPA manages a consortium of national technology platforms to provide the analytical- and informatics-based capabilities to deliver “Systems Biology” to the Australian research community, including industry.<p>
+                    <p>The Victorian node of Metabolomics Australia, located at the School of BioSciences and the Bio21 Institute for Molecular Science and Biotechnology, The University of Melbourne, is the hub of the national MA platform and offers an advanced analytical and bioinformatics capability providing state-of the-art metabolomics infrastructure. The facility offers access to expertise and technologies that cover a wide range of metabolite chemistries and quantitative analyses required for comprehensive metabolite profiling applicable to biomedical, agri-food and environmental sciences.<p>
+                </div>
+                <div style="font-family: 'Times New Roman', Times, serif; font-size: 20px">
+                    <p>This tool is designed for compiled raw lipids data analysis:<p>
+                        <ol>
+                            <li>The data uploaded as required will be aggregated with sample groups and fold changed with log transformation.</li>
+                            <li>Multiple pairs of chain length will be auto summed up.</li>
+                            <li>Ordered by decreasing chain length within a same metabolite class.</li>
+                        </ol>
+                    <p>The users can then:</p>
+                    <ol>
+                        <li>Change the comparison of test groups and control groups.</li>
+                        <li>Add significant list as wills.</li>
+                        <li>Download the individual/all chart(s) and table(s).</li>
+                    </ol>
+                    <p>Input example:</p>
+                </div>
+                <div id="example_table" style="padding: 20px">
+                    <img src="sample_file.png" alt="Sample File">
+                </div>
+            </div>
+        </div>
+
+        <div id="datapage" class="tabcontent">
+            <div style="padding: 11px">
+                <label for='datafile'>Please choose the data file (csv).</label>
+                <input id='datafile' type='file' accept='.csv' onchange='onClickOpen(this.files)' style="width: 60%; float: right;">
+            </div>
+            <div id="preview_div"></div>
+        </div>
+
+        <div id="listpage" class="tabcontent">
+            <div style="padding: 11px">
+                <a id="listpage_info">Recognized metabolites: 0 / Unrecognized metabolites: 0</a>
+                <button id="listpage_confirm" disabled onclick="onClickConfirm()" style="float: right">Confirm</button>
+            </div>
+            <div class="container">
+                <textarea id="siglist" oninput="onInputTextArea()" onscroll="onScrollTextArea()" placeholder="Please type significant metabolites here. One per each line."></textarea>
+                <div id="listpage_backdrop" class="backdrop">
+                    <div id="listpage_highlights" class="highlights"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="plotpage" class="tabcontent">
+            <div style="padding: 11px">
+                Group 1 (Anchor):
+                <select id='group_select1' onchange="onSelectionChanged()"></select>
+                Group 2:
+                <select id='group_select2' onchange="onSelectionChanged()"></select>
+                <button onclick="onClickSwap()">Swap</button>
+                <button id="plotpage_download" onclick="onClickDownload()" style="float: right">Download</button>
+            </div>
+
+            <div style="width: 150px; height:100%; float: left; padding: 20px 0px">
+                <div id="class_list" style="width: 100%; height: 100%; overflow: auto;"></div>
+            </div>
+            <div style="margin-left: 150px; padding: 10px">
+                <div id="main" style="width: 700px; height: 100%; float: left; padding: 10px; border: 1px solid #ccc; display: inline-block"></div>
+                <div id="plot_table" style="width: 100%; max-width: 350px; padding: 10px; display: inline-block"></div>
+            </div>
+        </div>
+    </main>
+
+    <!--javascripts-->
+    <script type="text/javascript">
+        // global variables
+        const ua = window.navigator.userAgent.toLowerCase();
+        const isIE = !!ua.match(/msie|trident\/7|edge/);
+
+        var datapage_results;
+        var datapage_table_chart;
+        var datapage_datatable_raw;
+        var datapage_datatable_agg;
+        var datapage_name_dict;
+        const group_column_beg = 5;
+
+        var listpage_enabled = false;
+        var listpage_valid = false;
+        const listpage_siglist = new Set();
+
+        var plotpage_enabled = false;
+        var plotpage_valid = false;
+        var plotpage_datatable;
+        var plotpage_dataview;
+        var plotpage_table_chart;
+        var plotpage_bar_chart;
+        var plotpage_selected_class;
+    </script>
+
+    <script type="text/javascript">
+        function openPage(pageName, elmnt) {
+            if ((pageName === 'plotpage' && !plotpage_enabled) || (pageName === 'listpage' && !listpage_enabled)) {
+                alert('Please upload the data file first.');
+                return;
+            }
+
+            const tabcontent = document.getElementsByClassName("tabcontent");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            // Show the specific tab content
+            document.getElementById(pageName).style.display = "block";
+
+            const tablinks = document.getElementsByClassName("tablink");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].style.backgroundColor = "";
+            }
+            // Add the specific color to the button used to open the tab content
+            elmnt.style.backgroundColor = "#aaa";
+            
+            if (pageName === 'listpage' && !listpage_valid) {
+                initializeListPage();
+                listpage_valid = true;
+            }
+            if (pageName === 'plotpage' && !plotpage_valid) {
+                initializePlotPage();
+                plotpage_valid = true;
+            }
+        }
+    </script>
+
+    <!--datapage functions:-->
+    <script type="text/javascript">
+        function onClickOpen(files) {
+            listpage_enabled = false;
+            listpage_valid = false;
+            plotpage_enabled = false;
+            plotpage_valid = false;
+            if (datapage_table_chart) {
+                datapage_table_chart.draw(google.visualization.arrayToDataTable([]));
+            }
+            datapage_name_dict = {};
+
+            var file = files[0];
+            console.log(files);
+            if (!file) {
+                return;
+            }
+
+            Papa.parse(file, {
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true,
+                complete: function (results) {
+                    try {
+                        datapage_results = results;
+
+                        // copy data from results to datapage_datatable_raw
+                        datapage_datatable_raw = new google.visualization.DataTable();
+                        
+                        const columns = results.meta.fields;
+                        datapage_datatable_raw.addColumn('string', columns[0].trim());
+                        for (let i = 1; i < columns.length; i++) {
+                            datapage_datatable_raw.addColumn('number', columns[i].trim());
+                        }
+                        
+                        datapage_datatable_raw.addRows(results.data.length);
+                        for (let i = 0; i < results.data.length; i++) {
+                            const row = results.data[i];
+                            for (let j = 0; j < columns.length; j++) {
+                                datapage_datatable_raw.setCell(i, j, row[columns[j]]);
+                            }
+                        }
+
+                        // visualize datapage_datatable_raw in datapage_table_chart
+                        datapage_table_chart = new google.visualization.Table(document.getElementById('preview_div'));
+                        datapage_table_chart.draw(datapage_datatable_raw, { showRowNumber: true, width: '100%', height: '100%' });
+
+                        // aggregate data in datapage_datatable_raw
+                        const agg_options = [];
+                        for (let i = 1; i < datapage_datatable_raw.getNumberOfColumns(); i++) {
+                            agg_options.push({ column: i, aggregation: google.visualization.data.avg, type: 'number' })
+                        }
+                        const df_agg = google.visualization.data.group(datapage_datatable_raw, [0], agg_options);
+
+                        // transpose df_agg and store in datapage_datatable_agg
+                        datapage_datatable_agg = new google.visualization.DataTable();
+                        datapage_datatable_agg.addColumn('string', 'Raw Name');
+                        for (let i = 0; i < df_agg.getNumberOfRows(); i++) {
+                            datapage_datatable_agg.addColumn('number', df_agg.getValue(i, 0));
+                        }
+                        datapage_datatable_agg.addRows(df_agg.getNumberOfColumns() - 1);
+                        for (let j = 1; j < df_agg.getNumberOfColumns(); j++) {
+                            datapage_datatable_agg.setCell(j - 1, 0, df_agg.getColumnLabel(j));
+                            for (let i = 0; i < df_agg.getNumberOfRows(); i++) {
+                                datapage_datatable_agg.setCell(j - 1, i + 1, df_agg.getValue(i, j));
+                            }
+                        }
+
+                        // insert columns before group names
+                        datapage_datatable_agg.insertColumn(1, 'string', 'Class');
+                        datapage_datatable_agg.insertColumn(2, 'number', 'Sum1');
+                        datapage_datatable_agg.insertColumn(3, 'number', 'Sum2');
+                        datapage_datatable_agg.insertColumn(4, 'string', 'Name');
+                        const class_pattern = /([\w-]+)((\(| )([A-Z]))?/;
+                        const digit_pattern = /(\d+):(\d+)/g;
+                        const special_pattern = /(\d+):(\d+) -\(\d+:\d+/;
+                        for (let i = 0; i < datapage_datatable_agg.getNumberOfRows(); i++) {
+                            const raw_name = datapage_datatable_agg.getValue(i, 0);
+                            let match = class_pattern.exec(raw_name);
+                            if (match) {
+                                let class_name = match[1];
+                                if (match[4]) {
+                                    class_name += '-' + match[4];
+                                }
+                                datapage_datatable_agg.setCell(i, 1, class_name);
+                            }
+
+                            let s1 = 0, s2 = 0, pair_count = 0;
+                            if (match = special_pattern.exec(raw_name)) {
+                                s1 = parseInt(match[1]);
+                                s2 = parseInt(match[2]);
+                                pair_count = 1;
+                            }
+                            else {
+                                while (match = digit_pattern.exec(raw_name)) {
+                                    s1 += parseInt(match[1]);
+                                    s2 += parseInt(match[2]);
+                                    pair_count += 1;
+                                }
+                            }
+                            datapage_datatable_agg.setCell(i, 2, s1);
+                            datapage_datatable_agg.setCell(i, 3, s2);
+                            if (pair_count <= 1) {
+                                datapage_datatable_agg.setCell(i, 4, raw_name);
+                            }
+                            else {
+                                datapage_datatable_agg.setCell(i, 4, raw_name + ' {' + s1 + ':' + s2 + '}');
+                            }
+
+                        }
+
+                        datapage_datatable_agg.sort([{ column: 1 }, { column: 2, desc: true }, { column: 3, desc: true }]);
+
+                        const names = datapage_datatable_agg.getDistinctValues(0);
+                        for (let i = 0; i < names.length; i++) {
+                            datapage_name_dict[names[i].toLowerCase()] = names[i];
+                        }
+
+                        listpage_enabled = true;
+                        plotpage_enabled = true;
+                    }
+                    catch (err) {
+                        console.log(err);
+                        alert('Please check your file.\n' + file.name);
+                    }
+                }
+            });
+        }
+    </script>
+
+    <!--listpage functions:-->
+    <script type="text/javascript">
+        function initializeListPage() {
+            document.getElementById('siglist').value = "";
+            document.getElementById('listpage_confirm').disabled = true;
+            listpage_siglist.clear();
+            onInputTextArea();
+        }
+
+        function onClickConfirm() {
+            const textarea = document.getElementById('siglist');
+
+            let text = '';
+            listpage_siglist.clear();
+            for (let line of textarea.value.trim().split('\n')) {
+                const name = line.trim();
+                const valid_name = datapage_name_dict[name.toLowerCase()];
+                if (valid_name) {
+                    text += valid_name + '\n';
+                    listpage_siglist.add(valid_name);
+                }
+                else {
+                    text += name + '\n';
+                }
+            }
+            textarea.value = text;
+            onInputTextArea();
+
+            console.log(listpage_siglist);
+
+            plotpage_valid = false;
+            document.getElementById('listpage_confirm').disabled = true;
+        }
+
+        function applyHighlights(text) {
+            console.log(datapage_name_dict);
+            let output = '';
+            let recognized_count = 0;
+            let unrecognized_count = 0;
+            for (let line of text.split('\n')) {
+                if (!datapage_name_dict[line.trim().toLowerCase()]) {
+                    if (line.trim() != '') {
+                        unrecognized_count += 1;
+                    }
+                    line = '<mark>' + line + '</mark>';
+                }
+                else {
+                    recognized_count += 1;
+                }
+                output += line + '\n';
+            }
+
+            const info = document.getElementById('listpage_info');
+            info.textContent = 'Recognized metabolites: ' + recognized_count + ' / Unrecognized metabolites: ' + unrecognized_count;
+
+            // IE wraps whitespace differently in a div vs textarea, this fixes it
+            if (isIE) {
+                output = output.replace(/ /g, ' <wbr>');
+            }
+            return output;
+        }
+
+        function onInputTextArea() {
+            document.getElementById('listpage_confirm').disabled = false;
+            const textarea = document.getElementById('siglist');
+            const highlights = document.getElementById('listpage_highlights');
+            highlights.innerHTML = applyHighlights(textarea.value);
+        }
+
+        function onScrollTextArea() {
+            const textarea = document.getElementById('siglist');
+            const backdrop = document.getElementById('listpage_backdrop');
+            backdrop.scrollTop = textarea.scrollTop;
+            backdrop.scrollLeft = textarea.scrollLeft;
+        }
+    </script>
+
+    <!--plotpage functions-->
+    <script type="text/javascript">
+        function clearSelect(select_id) {
+            const select = document.getElementById(select_id);
+            while (select.options.length != 0)
+                select.options.remove(0);
+        }
+
+        function initializeSelect(select_id, values) {
+            const select = document.getElementById(select_id);
+            for (let i = 0; i < values.length; i++)
+                select.options.add(new Option(values[i]), i);
+        }
+
+        function clearPlotPage() {
+            clearClassList('class_list');
+            clearSelect('group_select1');
+            clearSelect('group_select2');
+            if (plotpage_bar_chart) {
+                plotpage_bar_chart.setOption({
+                    'yAxis': { 'data': [] },
+                    'series': { 'data': [] }
+                });
+            }
+        }
+
+        function clearClassList(classlist_id) {
+            const classlist = document.getElementById(classlist_id);
+            while (classlist.firstChild) {
+                classlist.removeChild(classlist.firstChild);
+            }
+        }
+
+        function initializeClassList(classlist_id, values) {
+            const classlist = document.getElementById(classlist_id);
+            for (let value of values) {
+                const button = document.createElement('button');
+                button.textContent = value;
+                button.className = 'classbutton';
+                button.onclick = function () { onClickClassName(button, value); };
+                classlist.appendChild(button);
+            }
+        }
+
+        function onClickClassName(button, value) {
+            const others = document.getElementsByClassName('classbutton');
+            for (let i = 0; i < others.length; i++) {
+                others[i].style.backgroundColor = '#eee';
+                others[i].style.color = 'black';
+            }
+            button.style.backgroundColor = '#aaa';
+            button.style.color = 'white';
+
+            plotpage_selected_class = value;
+            onSelectionChanged();
+        }
+
+        function initializePlotPage() {
+            clearPlotPage();
+
+            plotpage_datatable = new google.visualization.DataView(datapage_datatable_agg);
+            if (listpage_siglist.size != 0) {
+                const selected_rows = plotpage_datatable.getFilteredRows([{
+                    column: 0, test: function (value, row, col, datatable) {
+                        return listpage_siglist.has(value);
+                    }
+                }]);
+                plotpage_datatable.setRows(selected_rows);
+            }
+
+            const classes = plotpage_datatable.getDistinctValues(1);
+            const groups = [];
+            for (let i = group_column_beg; i < plotpage_datatable.getNumberOfColumns(); i++) {
+                groups.push(plotpage_datatable.getColumnLabel(i));
+            }
+            console.log(classes);
+            console.log(groups);
+
+            plotpage_selected_class = classes[0];
+            initializeClassList('class_list', classes);
+            initializeSelect('group_select1', groups);
+            initializeSelect('group_select2', groups);
+            document.getElementById('group_select2').selectedIndex = 1;
+
+            const option = {
+                animation: false,
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' }
+                },
+                grid: {
+                    top: 50,
+                    bottom: 10,
+                    left: 20,
+                    right: 20,
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'value',
+                    minInterval: 0.1,
+                    maxInterval: 1,
+                    position: 'top',
+                    splitLine: { lineStyle: { type: 'dashed' } }
+                },
+                yAxis: {
+                    type: 'category',
+                    inverse: true,
+                    axisLine: { show: false },
+                    axisLabel: { fontWeight: 'bold', interval: 0 },
+                    axisTick: { show: false },
+                    splitLine: { show: false },
+                    data: []
+                },
+                toolbox: {
+                    show: true,
+                    feature: {
+                        saveAsImage: {
+                            show: true,
+                            title: 'Save',
+                            excludeComponents: ['toolbox'],
+                            pixelRatio: 2
+                        }
+                    }
+                },
+                series: [{ name: 'value', type: 'bar', data: [] }]
+            };
+
+            if (!plotpage_bar_chart) {
+                plotpage_bar_chart = echarts.init(document.getElementById('main'));
+            }
+            plotpage_bar_chart.setOption(option);
+
+            plotpage_dataview = new google.visualization.DataView(plotpage_datatable);
+            if (!plotpage_table_chart) {
+                plotpage_table_chart = new google.visualization.Table(document.getElementById('plot_table'));
+            }
+
+            //onSelectionChanged();
+            onClickClassName(document.getElementsByClassName('classbutton')[0], plotpage_selected_class);
+        }
+
+        function onSelectionChanged() {
+            updateDataViewAndBarChart(plotpage_selected_class);
+            plotpage_table_chart.draw(plotpage_dataview, { sort: 'disable', showRowNumber: true, width: '100%', height: '100%' });
+        }
+
+        function updateDataViewAndBarChart(selected_class) {
+            const selected_group1 = document.getElementById('group_select1').value;
+            const selected_group2 = document.getElementById('group_select2').value;
+            const selected_group1_index = document.getElementById('group_select1').selectedIndex;
+            const selected_group2_index = document.getElementById('group_select2').selectedIndex;
+
+            // update dataview
+            const selected_rows = plotpage_datatable.getFilteredRows([{ column: 1, value: selected_class }])
+            plotpage_dataview.setRows(selected_rows);
+            plotpage_dataview.setColumns([4, selected_group1_index + group_column_beg, selected_group2_index + group_column_beg]);
+
+            // prepare data for bar chart
+            const labels = [], values = [];
+            for (let i = 0; i < plotpage_dataview.getNumberOfRows(); i++) {
+                labels.push(plotpage_dataview.getValue(i, 0));
+                const value = Math.log(plotpage_dataview.getValue(i, 2) / plotpage_dataview.getValue(i, 1));
+                values.push(value ? value : 0);
+            }
+
+            const max_val = Math.max(...values);
+            const min_val = Math.min(...values);
+            const max_abs_val = Math.ceil(5 * Math.max(Math.abs(max_val), Math.abs(min_val))) / 5;
+
+            // plot bar chart
+            plotpage_bar_chart.setOption({
+                title: {
+                    text: 'Class Name: ' + selected_class + ' ln(' + selected_group2 + '/' + selected_group1 + ')',
+                },
+                xAxis: {
+                    min: -max_abs_val,
+                    max: max_abs_val
+                },
+                yAxis: { data: labels },
+                series: { data: values }
+            })
+
+            document.getElementById('main').style.height = (30 * labels.length + 100) + 'px';
+            plotpage_bar_chart.resize();
+        }
+
+        //function onMouseDownDownload() {
+        //    document.getElementById('plotpage_download').disabled = true;
+        //}
+
+        function onClickDownload() {
+            //document.getElementById('plotpage_download').disabled = true;
+            download();
+            //document.getElementById('plotpage_download').disabled = false;
+        }
+
+        function download() {
+            const img = new JSZip();
+
+            const selected_group1 = document.getElementById('group_select1').value;
+            const selected_group2 = document.getElementById('group_select2').value;
+
+            const classes = plotpage_datatable.getDistinctValues(1);
+            for (let selected_class of classes) {
+                console.log(selected_class);
+                updateDataViewAndBarChart(selected_class);
+
+                const url = plotpage_bar_chart.getConnectedDataURL({
+                    pixelRatio: 5,　　//导出的图片分辨率比率,默认是1
+                    backgroundColor: '#fff',　　//图表背景色
+                    excludeComponents: [　　//保存图表时忽略的工具组件,默认忽略工具栏
+                        'toolbox'
+                    ],
+                    type: 'png'　　//图片类型支持png和jpeg
+                });
+
+                img.file(selected_class + '.png', url.slice(url.indexOf('base64,') + 7), { base64: true });
+
+                let csv = 'Metabolite,' + selected_group1 + ' (Anchor),' + selected_group2 + ',ln ratio\n';
+                for (let row = 0; row < plotpage_dataview.getNumberOfRows(); row++) {
+                    const class_name = plotpage_dataview.getValue(row, 0);
+                    const value_1 = plotpage_dataview.getValue(row, 1);
+                    const value_2 = plotpage_dataview.getValue(row, 2);
+                    const ln_ratio = Math.log(value_2 / value_1);
+                    csv += class_name + ',' + value_1 + ',' + value_2 + ',' + ln_ratio + '\n';
+                }
+                img.file(selected_class + '.csv', csv);
+            }
+
+            img.generateAsync({ type: "blob" }).then(function (content) {
+                saveAs(content, selected_group1 + '-' + selected_group2 + ".zip");
+            });
+
+            updateDataViewAndBarChart(plotpage_selected_class);
+        }
+        
+        function onClickSwap() {
+            const selected_group1 = document.getElementById('group_select1').value;
+            const selected_group2 = document.getElementById('group_select2').value;
+            if (selected_group1 != selected_group2) {
+                document.getElementById('group_select1').value = selected_group2;
+                document.getElementById('group_select2').value = selected_group1;
+                onSelectionChanged();
+            }
+        }
+    </script>
+
+    <script type='text/javascript'>
+        google.charts.load('current', { 'packages': ['corechart', 'table'] });
+        document.getElementById("defaultOpen").click();
+    </script>
+
+</body>
+</html>
